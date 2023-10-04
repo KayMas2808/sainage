@@ -1,74 +1,92 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel, QFrame
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette, QColor, QFont
+from PyQt5.QtGui import QPalette, QColor, QFont, QIcon
 
 class SignLanguageApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("sAInage")
+        self.setWindowIcon(QIcon("/record.png"))
         self.setGeometry(100, 100, 800, 600)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
-        self.layout = QHBoxLayout()
+        self.layout = QHBoxLayout(self.central_widget)
 
-        # sidebar
-        self.sidebar = QTextEdit()
-        self.sidebar.setReadOnly(True)
-        self.sidebar.setStyleSheet("background-color: #202123; color: white;")
-        self.layout.addWidget(self.sidebar, 15) #15% width
+        # Left side for text output
+        self.left_layout = QVBoxLayout()
 
-        #main area
-        self.main_area = QWidget()
-        self.main_layout = QVBoxLayout(self.main_area)
+        # Top navigation bar with icons for chat history, user account, and logout
+        self.nav_layout = QHBoxLayout()
+        self.chat_history_button = QPushButton()
+        self.chat_history_button.setIcon(QIcon("/history.png"))
+        self.chat_history_button.setFixedSize(40, 40)
+        self.user_account_button = QPushButton()
+        self.user_account_button.setIcon(QIcon.fromTheme("user-identity"))
+        self.user_account_button.setFixedSize(40, 40)
+        self.logout_button = QPushButton()
+        self.logout_button.setIcon(QIcon("/logout.png"))
+        self.logout_button.setFixedSize(40, 40)
+        self.nav_layout.addWidget(self.chat_history_button)
+        self.nav_layout.addWidget(self.user_account_button)
+        self.nav_layout.addWidget(self.logout_button)
+        self.left_layout.addLayout(self.nav_layout)
 
-       #camera input area
-        self.camera_heading = QLabel("Camera")
-        self.camera_heading.setFont(QFont("Arial", 12, QFont.Bold))
-        self.main_layout.addWidget(self.camera_heading)
-        self.camera_label = QLabel(self.main_area)
-        self.camera_label.setAlignment(Qt.AlignCenter)
-        self.camera_label.setStyleSheet("background-color: #444654;")
-        self.main_layout.addWidget(self.camera_label, 60)  # 60% of height
-
-        # text output area
+        # Text output area (dynamic height)
+        self.text_box = QFrame()
+        self.text_box.setStyleSheet("background-color: #292929; border-radius:15px;")
         self.text_heading = QLabel("Output")
-        self.text_heading.setFont(QFont("Arial", 12, QFont.Bold))
-        self.main_layout.addWidget(self.text_heading)
-        self.text_output = QTextEdit(self.main_area)
-        self.text_output.setStyleSheet("background-color: #343541; color: white; padding: 10px;")
-        self.main_layout.addWidget(self.text_output, 40)  # 40% of height
+        self.text_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
+        self.text_output = QTextEdit(self.text_box)
+        self.text_output.setStyleSheet("background-color: #3c3c3c; color: white; padding: 10px;")
+        self.text_output.setReadOnly(True)
+        self.text_output.setAlignment(Qt.AlignLeft)
+        self.left_layout.addWidget(self.text_heading)
+        self.left_layout.addWidget(self.text_box, 1)  # Dynamic height
 
-        self.layout.addWidget(self.main_area, 85)  # 85% of width
+        # Add the left side layout to the main layout
+        self.layout.addLayout(self.left_layout, 40)  # 40% of width
 
-        self.central_widget.setLayout(self.layout)
+        # Right side for camera input
+        self.right_layout = QVBoxLayout()
 
-        # Placeholder to simulate camera input
-        self.camera_label.setText("Camera Input")
+        # Camera input area
+        self.camera_box = QFrame()
+        self.camera_box.setStyleSheet("background-color: #3c3c3c; border-radius:15px;")
+        self.camera_heading = QLabel("Camera")
+        self.camera_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
+        self.camera_label = QLabel(self.camera_box)
+        self.camera_label.setAlignment(Qt.AlignRight)
+        self.right_layout.addWidget(self.camera_heading)
+        self.right_layout.addWidget(self.camera_box, 60)  # 60% of width
 
-        # Recognition button (on the camera input area)
+        # Button to start interpreter
         self.recognition_button = QPushButton("Start Interpreter")
-        self.recognition_button.setStyleSheet("background-color: #444654; color: white; padding: 10px; font-size: 16px;")
-        self.recognition_button.setFixedSize(200, 50)  # size
-        self.main_layout.addWidget(self.recognition_button, 1, alignment=Qt.AlignTop | Qt.AlignHCenter)
+        self.recognition_button.setStyleSheet("background-color: #19c37d; color: white; padding: 10px; font-size: 23px;border-radius:15px;")
+        self.recognition_button.setIcon(QIcon.fromTheme("media-record"))
+        self.recognition_button.setFont(QFont("Roboto Flex", 12))
+        self.right_layout.addWidget(self.recognition_button)
+
+        # Add the right side layout to the main layout
+        self.layout.addLayout(self.right_layout, 60)  # 60% of width
 
     def recognize_sign_language(self):
-        # function for sign language recognition
+        # Function for sign language recognition
         recognized_text = "This is a placeholder for recognized sign language."
         self.text_output.append(recognized_text)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SignLanguageApp()
-    
-    # set application color palette
+
+    # Set application color palette
     palette = QPalette()
-    palette.setColor(QPalette.Window, QColor("#202123"))
+    palette.setColor(QPalette.Window, QColor("#121212"))  # Set the background to black
     palette.setColor(QPalette.WindowText, Qt.white)
     app.setPalette(palette)
-    
-    window.show()
+
+    window.showMaximized()
     sys.exit(app.exec_())
