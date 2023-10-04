@@ -50,7 +50,7 @@ class SignLanguageApp(QMainWindow):
         self.camera_label.setText("Camera Input")
 
         # Recognition button (on the camera input area)
-        self.recognition_button = QPushButton("Text Output")
+        self.recognition_button = QPushButton("Start Interpreter")
         self.recognition_button.setStyleSheet("background-color: #444654; color: white; padding: 10px; font-size: 16px;")
         self.recognition_button.setFixedSize(200, 50)  # size
         self.main_layout.addWidget(self.recognition_button, 1, alignment=Qt.AlignTop | Qt.AlignHCenter)
