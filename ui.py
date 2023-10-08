@@ -70,7 +70,7 @@ class SignLanguageApp(QMainWindow):
         self.camera_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
         self.camera_label = QLabel(self.camera_box)
         self.camera_label.setAlignment(Qt.AlignRight)
-        self.camera_label.setMinimumSize(200, 40)
+        self.camera_label.setMinimumSize(800, 160)
         self.right_layout.addWidget(self.camera_heading)
         self.right_layout.addWidget(self.camera_box, 60)  # 60% of width
 
@@ -193,7 +193,6 @@ if __name__ == "__main__":
                 if len(buffer) < 10:
                     buffer.append(predicted_character)
                 else:
-                    print(buffer)
                     window.text_output.append(most_common_value(buffer))
                     buffer = []
                 
