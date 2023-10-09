@@ -1,7 +1,17 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel, QFrame
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QTextEdit,
+    QPushButton,
+    QLabel,
+    QFrame,
+)
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPalette, QColor, QFont, QIcon ,QPixmap
+from PyQt5.QtGui import QPalette, QColor, QFont, QIcon, QPixmap
 import pickle
 from PIL import Image as im
 from collections import Counter
@@ -12,6 +22,23 @@ import numpy as np
 
 cameraStart = False
 
+def most_common_value(lst):
+    # Use Counter to count occurrences of each element
+    counter = Counter(lst)
+
+    # Use the most_common() method to get a list of (element, count) tuples
+    most_common_elements = counter.most_common()
+
+    # Check if the list is not empty
+    if most_common_elements:
+        # Return the most common element (first element of the first tuple)
+        return most_common_elements[0][0]
+    else:
+        # If the list is empty, return None or handle the case as needed
+        return None
+
+
+# ...
 
 class SignLanguageApp(QMainWindow):
     def __init__(self):
@@ -51,7 +78,9 @@ class SignLanguageApp(QMainWindow):
         self.text_heading = QLabel("Output")
         self.text_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
         self.text_output = QTextEdit(self.text_box)
-        self.text_output.setStyleSheet("background-color: #3c3c3c; color: white; padding: 10px;")
+        self.text_output.setStyleSheet(
+            "background-color: #3c3c3c; color: white; padding: 10px;"
+        )
         self.text_output.setReadOnly(True)
         self.text_output.setAlignment(Qt.AlignLeft)
         self.left_layout.addWidget(self.text_heading)
@@ -69,43 +98,40 @@ class SignLanguageApp(QMainWindow):
         self.camera_heading = QLabel("Camera")
         self.camera_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
         self.camera_label = QLabel(self.camera_box)
-        self.camera_label.setAlignment(Qt.AlignRight)
-        self.camera_label.setMinimumSize(800, 160)
+        self.camera_label.setAlignment(Qt.AlignLeft)
+        self.camera_label.setMinimumSize(1131, 839)
         self.right_layout.addWidget(self.camera_heading)
         self.right_layout.addWidget(self.camera_box, 60)  # 60% of width
 
-        # Button to start interpreter
+        # Button to start/stop interpreter
         self.recognition_button = QPushButton("Start Interpreter")
-        self.recognition_button.setStyleSheet("background-color: #19c37d; color: white; padding: 10px; font-size: 23px;border-radius:15px;")
+        self.recognition_button.setStyleSheet(
+            "background-color: #19c37d; color: white; padding: 10px; font-size: 23px;border-radius:15px;"
+        )
         self.recognition_button.setIcon(QIcon.fromTheme("media-record"))
         self.recognition_button.setFont(QFont("Roboto Flex", 12))
         self.right_layout.addWidget(self.recognition_button)
-        self.recognition_button.clicked.connect(self.recognize_sign_language)
+        self.recognition_button.clicked.connect(self.toggle_recognition)
+
         # Add the right side layout to the main layout
         self.layout.addLayout(self.right_layout, 60)  # 60% of width
 
-    def recognize_sign_language(self):
-        # function for sign language recognition         
-        recognized_text = predicted_character        
-        self.text_output.append(recognized_text)
-        
-        global cameraStart 
-        cameraStart = True
+        # Initialize the recognition flag
+        self.recognizing = False
 
-def most_common_value(lst):
-    # Use Counter to count occurrences of each element
-    counter = Counter(lst)
+    def toggle_recognition(self):
+        # Toggle recognition on/off
+        global cameraStart
+        self.recognizing = not self.recognizing
+        cameraStart = self.recognizing
+        if self.recognizing:
+            self.recognition_button.setText("Stop Interpreter")
+            self.recognition_button.setIcon(QIcon.fromTheme("media-playback-stop"))
+        else:
+            self.recognition_button.setText("Start Interpreter")
+            self.recognition_button.setIcon(QIcon.fromTheme("media-record"))
 
-    # Use the most_common() method to get a list of (element, count) tuples
-    most_common_elements = counter.most_common()
-
-    # Check if the list is not empty
-    if most_common_elements:
-        # Return the most common element (first element of the first tuple)
-        return most_common_elements[0][0]
-    else:
-        # If the list is empty, return None or handle the case as needed
-        return None  
+# ...
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -117,9 +143,8 @@ if __name__ == "__main__":
     palette.setColor(QPalette.WindowText, Qt.white)
     app.setPalette(palette)
 
-
-    model_dict = pickle.load(open('./model.p', 'rb'))
-    model = model_dict['model']
+    model_dict = pickle.load(open("./model.p", "rb"))
+    model = model_dict["model"]
 
     cap = cv2.VideoCapture(0)
 
@@ -129,9 +154,8 @@ if __name__ == "__main__":
 
     hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
     buffer = []
-    labels_dict = {0: 'A', 1: 'B', 2: 'C'}
+    labels_dict = {0: "A", 1: "B", 2: "C"}
     while True:
-
         data_aux = []
         x_ = []
         y_ = []
@@ -151,7 +175,8 @@ if __name__ == "__main__":
                         hand_landmarks,  # model output
                         mp_hands.HAND_CONNECTIONS,  # hand connections
                         mp_drawing_styles.get_default_hand_landmarks_style(),
-                        mp_drawing_styles.get_default_hand_connections_style())
+                        mp_drawing_styles.get_default_hand_connections_style(),
+                    )
 
                 for hand_landmarks in results.multi_hand_landmarks:
                     for i in range(len(hand_landmarks.landmark)):
@@ -174,33 +199,35 @@ if __name__ == "__main__":
 
                 prediction = model.predict([np.asarray(data_aux)])
 
-                
                 predicted_character = labels_dict[int(prediction[0])]
                 print(predicted_character)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 0), 4)
-                cv2.putText(frame, predicted_character, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 0, 0), 3,
-                            cv2.LINE_AA)
+                cv2.putText(
+                    frame,
+                    predicted_character,
+                    (x1, y1 - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1.3,
+                    (0, 0, 0),
+                    3,
+                    cv2.LINE_AA,
+                )
         except:
             print("error")
 
-
-        # cv2.imshow('frame', frame)
         data = im.fromarray(frame)
-        data.save('image.png')
+        data.save("image.png")
         if cameraStart:
             window.camera_label.setPixmap(QPixmap("image.png"))
-            if predicted_character != "":    
+            if predicted_character != "":
                 if len(buffer) < 10:
                     buffer.append(predicted_character)
                 else:
                     window.text_output.append(most_common_value(buffer))
                     buffer = []
-                
-                        
+
         window.showMaximized()
         cv2.waitKey(1)
-        
-
 
     cap.release()
     cv2.destroyAllWindows()
