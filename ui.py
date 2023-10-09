@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QFrame,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QPalette, QColor, QFont, QIcon, QPixmap
 import pickle
 from PIL import Image as im
@@ -99,7 +99,7 @@ class SignLanguageApp(QMainWindow):
         self.camera_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
         self.camera_label = QLabel(self.camera_box)
         self.camera_label.setAlignment(Qt.AlignLeft)
-        self.camera_label.setMinimumSize(1131, 839)
+        self.camera_label.setMinimumSize(1500, 1000)
         self.right_layout.addWidget(self.camera_heading)
         self.right_layout.addWidget(self.camera_box, 60)  # 60% of width
 
@@ -131,7 +131,12 @@ class SignLanguageApp(QMainWindow):
             self.recognition_button.setText("Start Interpreter")
             self.recognition_button.setIcon(QIcon.fromTheme("media-record"))
 
-# ...
+    @pyqtSlot()
+    def closeEvent(self, event):
+        global cap
+        cap.release()
+        cv2.destroyAllWindows()
+        event.accept()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -229,5 +234,4 @@ if __name__ == "__main__":
         window.showMaximized()
         cv2.waitKey(1)
 
-    cap.release()
-    cv2.destroyAllWindows()
+    sys.exit(app.exec_())
