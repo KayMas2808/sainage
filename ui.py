@@ -7,129 +7,131 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QTextEdit,
     QPushButton,
-    QLabel,
+    QLabel,  # Add QLabel import
     QFrame,
 )
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QPalette, QColor, QFont, QIcon, QPixmap
 import pickle
 from PIL import Image as im
-from collections import Counter
 import cv2
 import mediapipe as mp
 import numpy as np
-
-
-cameraStart = False
+from collections import Counter
 
 def most_common_value(lst):
-    # Use Counter to count occurrences of each element
     counter = Counter(lst)
-
-    # Use the most_common() method to get a list of (element, count) tuples
     most_common_elements = counter.most_common()
-
-    # Check if the list is not empty
     if most_common_elements:
-        # Return the most common element (first element of the first tuple)
         return most_common_elements[0][0]
     else:
-        # If the list is empty, return None or handle the case as needed
         return None
 
-
-# ...
+cameraStart = False
 
 class SignLanguageApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("sAInage")
-        self.setWindowIcon(QIcon("/record.png"))
+        self.setWindowIcon(QIcon("images/logo.png"))
         self.setGeometry(100, 100, 800, 600)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
+        self.setup_ui()
+
+        self.recognizing = False
+
+    def setup_ui(self):
         self.layout = QHBoxLayout(self.central_widget)
 
-        # Left side for text output
         self.left_layout = QVBoxLayout()
 
-        # Top navigation bar with icons for chat history, user account, and logout
         self.nav_layout = QHBoxLayout()
-        self.chat_history_button = QPushButton()
-        self.chat_history_button.setIcon(QIcon("/history.png"))
-        self.chat_history_button.setFixedSize(40, 40)
-        self.user_account_button = QPushButton()
-        self.user_account_button.setIcon(QIcon.fromTheme("user-identity"))
-        self.user_account_button.setFixedSize(40, 40)
+        self.copy_button = QPushButton()
+        self.copy_button.setIcon(QIcon("images/copy.png"))
+        self.copy_button.setStyleSheet(
+            "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
+        )
+        self.copy_button.clicked.connect(self.copy_text)
+        self.history_button = QPushButton()
+        self.history_button.setIcon(QIcon("images/history.png"))
+        self.history_button.setStyleSheet(
+            "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
+        )
         self.logout_button = QPushButton()
-        self.logout_button.setIcon(QIcon("/logout.png"))
-        self.logout_button.setFixedSize(40, 40)
-        self.nav_layout.addWidget(self.chat_history_button)
-        self.nav_layout.addWidget(self.user_account_button)
+        self.logout_button.setIcon(QIcon("images/exit.png"))
+        self.logout_button.setStyleSheet(
+            "background-color: #fe0000; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
+        )
+        self.logout_button.clicked.connect(self.close)  # Exit the program
+        self.nav_layout.addWidget(self.copy_button)
+        self.nav_layout.addWidget(self.history_button)
         self.nav_layout.addWidget(self.logout_button)
         self.left_layout.addLayout(self.nav_layout)
 
-        # Text output area (dynamic height)
         self.text_box = QFrame()
-        self.text_box.setStyleSheet("background-color: #292929; border-radius:15px;")
+        self.text_box.setStyleSheet("background-color: #3c3c3c; border-radius:15px;")
         self.text_heading = QLabel("Output")
         self.text_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
         self.text_output = QTextEdit(self.text_box)
         self.text_output.setStyleSheet(
-            "background-color: #3c3c3c; color: white; padding: 10px;"
+            "background-color: #3c3c3c; color: white; padding: 10px; font-size: 20px;"
         )
         self.text_output.setReadOnly(True)
         self.text_output.setAlignment(Qt.AlignLeft)
         self.left_layout.addWidget(self.text_heading)
-        self.left_layout.addWidget(self.text_box, 1)  # Dynamic height
+        self.left_layout.addWidget(self.text_output, 2)  # Increased size
 
-        # Add the left side layout to the main layout
-        self.layout.addLayout(self.left_layout, 40)  # 40% of width
+        self.layout.addLayout(self.left_layout, 40)
 
-        # Right side for camera input
         self.right_layout = QVBoxLayout()
 
-        # Camera input area
         self.camera_box = QFrame()
         self.camera_box.setStyleSheet("background-color: #3c3c3c; border-radius:15px;")
         self.camera_heading = QLabel("Camera")
         self.camera_heading.setFont(QFont("Roboto Flex", 12, QFont.Bold))
         self.camera_label = QLabel(self.camera_box)
-        self.camera_label.setAlignment(Qt.AlignLeft)
-        self.camera_label.setMinimumSize(1500, 1000)
+        self.camera_label.setAlignment(Qt.AlignCenter)  # Center camera output
         self.right_layout.addWidget(self.camera_heading)
-        self.right_layout.addWidget(self.camera_box, 60)  # 60% of width
+        self.right_layout.addWidget(self.camera_label, 5)  # Increased size
 
-        # Button to start/stop interpreter
+        # Add a QLabel for displaying text when the interpreter is off
+        self.interpreter_status_label = QLabel("Interpreter is OFF")
+        self.interpreter_status_label.setFont(QFont("Roboto Flex", 12, QFont.Bold))
+        self.interpreter_status_label.setStyleSheet(
+            "background-color: #3c3c3c; color: white; padding: 10px; font-size: 20px;"
+        )
+        self.interpreter_status_label.setAlignment(Qt.AlignCenter)
+        self.right_layout.addWidget(self.interpreter_status_label)
+
         self.recognition_button = QPushButton("Start Interpreter")
         self.recognition_button.setStyleSheet(
-            "background-color: #19c37d; color: white; padding: 10px; font-size: 23px;border-radius:15px;"
+            "background-color: #19c37d; color: white; padding: 10px; font-size: 23px; border-radius: 15px;"
         )
-        self.recognition_button.setIcon(QIcon.fromTheme("media-record"))
+        self.recognition_button.setIcon(QIcon("images/record.png"))
         self.recognition_button.setFont(QFont("Roboto Flex", 12))
         self.right_layout.addWidget(self.recognition_button)
         self.recognition_button.clicked.connect(self.toggle_recognition)
 
-        # Add the right side layout to the main layout
-        self.layout.addLayout(self.right_layout, 60)  # 60% of width
+        self.layout.addLayout(self.right_layout, 60)
 
-        # Initialize the recognition flag
-        self.recognizing = False
+    def copy_text(self):
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.text_output.toPlainText())
 
     def toggle_recognition(self):
-        # Toggle recognition on/off
         global cameraStart
         self.recognizing = not self.recognizing
         cameraStart = self.recognizing
         if self.recognizing:
             self.recognition_button.setText("Stop Interpreter")
-            self.recognition_button.setIcon(QIcon.fromTheme("media-playback-stop"))
+            self.interpreter_status_label.setText("Interpreter is ON")
         else:
             self.recognition_button.setText("Start Interpreter")
-            self.recognition_button.setIcon(QIcon.fromTheme("media-record"))
+            self.interpreter_status_label.setText("Interpreter is OFF")
 
     @pyqtSlot()
     def closeEvent(self, event):
@@ -142,9 +144,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SignLanguageApp()
 
-    # Set application color palette
     palette = QPalette()
-    palette.setColor(QPalette.Window, QColor("#121212"))  # Set the background to black
+    palette.setColor(QPalette.Window, QColor("#121212"))
     palette.setColor(QPalette.WindowText, Qt.white)
     app.setPalette(palette)
 
