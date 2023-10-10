@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QLabel,  # Add QLabel import
     QFrame,
+    QDialog
 )
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QPalette, QColor, QFont, QIcon, QPixmap
@@ -18,6 +19,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from collections import Counter
+import sqlite3
 
 def most_common_value(lst):
     counter = Counter(lst)
@@ -43,6 +45,27 @@ class SignLanguageApp(QMainWindow):
         self.setup_ui()
 
         self.recognizing = False
+        self.chat_history = []
+
+        self.conn=sqlite3.connect('chat_history.db')
+        self.create_table()
+
+    def create_table(self):
+        cursor=self.conn.cursor()
+        cursor.execute("""CREATE TABLE IF NOT EXISTS chat_history(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,message TEXT)""")
+        self.conn.commit()
+
+    def save_to_database(self, message):
+        cursor = self.conn.cursor()
+        cursor.execute("INSERT INTO chat_history (message) VALUES (?)", (message,))
+        self.conn.commit()
+
+    def retrieve_chat_history(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT message FROM chat_history")
+        history = cursor.fetchall()
+        return [item[0] for item in history]
 
     def setup_ui(self):
         self.layout = QHBoxLayout(self.central_widget)
@@ -61,6 +84,8 @@ class SignLanguageApp(QMainWindow):
         self.history_button.setStyleSheet(
             "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
         )
+        self.history_button.clicked.connect(self.show_chat_history)
+
         self.logout_button = QPushButton()
         self.logout_button.setIcon(QIcon("images/exit.png"))
         self.logout_button.setStyleSheet(
@@ -133,12 +158,40 @@ class SignLanguageApp(QMainWindow):
             self.recognition_button.setText("Start Interpreter")
             self.interpreter_status_label.setText("Interpreter is OFF")
 
+    def show_chat_history(self):
+        history_dialog = ChatHistoryDialog(self.retrieve_chat_history())
+        history_dialog.exec_()
+
     @pyqtSlot()
     def closeEvent(self, event):
         global cap
         cap.release()
         cv2.destroyAllWindows()
+        self.conn.close()  # Close the database connection
         event.accept()
+
+class ChatHistoryDialog(QDialog):
+    def __init__(self, chat_history):
+        super().__init__()
+
+        self.setWindowTitle("Chat History")
+        self.setGeometry(200, 200, 600, 400)
+
+        layout = QVBoxLayout()
+
+        self.history_text = QTextEdit()
+        self.history_text.setReadOnly(True)
+
+        layout.addWidget(self.history_text)
+
+        self.chat_history = chat_history
+
+        self.load_history()
+
+        self.setLayout(layout)
+
+    def load_history(self):
+        self.history_text.setPlainText("\n".join(self.chat_history))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
