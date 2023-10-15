@@ -73,20 +73,20 @@ class SignLanguageApp(QMainWindow):
         self.left_layout = QVBoxLayout()
 
         self.nav_layout = QHBoxLayout()
-        self.copy_button = QPushButton()
+        self.copy_button = QPushButton("  Copy")
         self.copy_button.setIcon(QIcon("images/copy.png"))
         self.copy_button.setStyleSheet(
             "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
         )
         self.copy_button.clicked.connect(self.copy_text)
-        self.history_button = QPushButton()
+        self.history_button = QPushButton("  History")
         self.history_button.setIcon(QIcon("images/history.png"))
         self.history_button.setStyleSheet(
             "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
         )
         self.history_button.clicked.connect(self.show_chat_history)
 
-        self.logout_button = QPushButton()
+        self.logout_button = QPushButton("  Exit")
         self.logout_button.setIcon(QIcon("images/exit.png"))
         self.logout_button.setStyleSheet(
             "background-color: #fe0000; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
