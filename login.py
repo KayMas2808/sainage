@@ -79,7 +79,7 @@ class LoginWindow(QWidget):
         user = self.cursor.fetchone()
 
         if user:
-            subprocess.Popen(["python", "main.py"])
+            subprocess.Popen(["python", "tempMain.py", username])  # Pass the username to main.py
         else:
             QMessageBox.warning(self, "Login Failed", "Invalid username or password.")
 
