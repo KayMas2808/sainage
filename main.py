@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QTextEdit,
     QPushButton,
-    QLabel,  # Add QLabel import
+    QLabel,
     QFrame,
     QDialog
 )
@@ -34,7 +34,7 @@ def most_common_value(lst):
 cameraStart = False
 
 class SignLanguageApp(QMainWindow):
-    def __init__(self):
+    def __init__(self, username):
         super().__init__()
 
         self.setWindowTitle("sAInage")
@@ -49,23 +49,28 @@ class SignLanguageApp(QMainWindow):
         self.recognizing = False
         self.chat_history = []
 
-        self.conn=sqlite3.connect('chat_history.db')
+        self.username = username  # Store the username
+
+        self.conn = sqlite3.connect('chat_history.db')  # Use a single database for all users
         self.create_table()
 
     def create_table(self):
-        cursor=self.conn.cursor()
-        cursor.execute("""CREATE TABLE IF NOT EXISTS chat_history(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,message TEXT)""")
+        cursor = self.conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chat_history(
+            username TEXT,
+            message TEXT)
+        """)
         self.conn.commit()
 
-    def save_to_database(self, message):
+    def save_message_to_history(self, message):
         cursor = self.conn.cursor()
-        cursor.execute("INSERT INTO chat_history (message) VALUES (?)", (message,))
+        cursor.execute("INSERT INTO chat_history (username, message) VALUES (?, ?)", (self.username, message))
         self.conn.commit()
 
     def retrieve_chat_history(self):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT message FROM chat_history")
+        cursor.execute("SELECT message FROM chat_history WHERE username=?", (self.username,))
         history = cursor.fetchall()
         return [item[0] for item in history]
 
@@ -159,22 +164,29 @@ class SignLanguageApp(QMainWindow):
         else:
             self.recognition_button.setText("Start Interpreter")
             self.interpreter_status_label.setText("Interpreter is OFF")
+            # Save the message to chat history
+            message = f"{predicted_character}"
+            self.save_message_to_history(message)
 
     def show_chat_history(self):
-        history_dialog = ChatHistoryDialog(self.retrieve_chat_history())
+        history_dialog = ChatHistoryDialog(self.retrieve_chat_history(), self)
         history_dialog.exec_()
+        self.update_chat_history()
+
+    def update_chat_history(self):
+        history_text = "\n".join(self.retrieve_chat_history())  # Retrieve and display chat history
+        self.text_output.setPlainText(history_text)
 
     @pyqtSlot()
     def closeEvent(self, event):
         global cap
         cap.release()
         cv2.destroyAllWindows()
-        self.conn.close()  # Close the database connection
         event.accept()
 
 class ChatHistoryDialog(QDialog):
-    def __init__(self, chat_history):
-        super().__init__()
+    def __init__(self, chat_history, parent=None):
+        super().__init__(parent)
 
         self.setWindowTitle("Chat History")
         self.setGeometry(200, 200, 600, 400)
@@ -201,8 +213,13 @@ def ttsFunction(text):
     engine.runAndWait()
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python main.py <username>")
+        sys.exit(1)
+
     app = QApplication(sys.argv)
-    window = SignLanguageApp()
+    username = sys.argv[1]
+    window = SignLanguageApp(username)
 
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor("#121212"))
