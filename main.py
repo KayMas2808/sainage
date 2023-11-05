@@ -20,11 +20,13 @@ import mediapipe as mp
 import numpy as np
 from collections import Counter
 import sqlite3
+import pyttsx3
 
 def most_common_value(lst):
     counter = Counter(lst)
     most_common_elements = counter.most_common()
     if most_common_elements:
+        ttsFunction(most_common_elements[0][0])
         return most_common_elements[0][0]
     else:
         return None
@@ -193,6 +195,11 @@ class ChatHistoryDialog(QDialog):
     def load_history(self):
         self.history_text.setPlainText("\n".join(self.chat_history))
 
+def ttsFunction(text):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = SignLanguageApp()
@@ -213,7 +220,7 @@ if __name__ == "__main__":
 
     hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
     buffer = []
-    labels_dict = {0: "A", 1: "B", 2: "C"}
+    labels_dict = {0: "Hello", 1: "How are you", 2: "I am fine", 3: "Thank you",4:"what is your name",5:"test"}
     while True:
         data_aux = []
         x_ = []
