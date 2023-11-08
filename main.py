@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
     hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
     buffer = []
-    labels_dict = {0: "Hello", 1: "How are you", 2: "I am fine", 3: "Thank you",4:"what is your name",5:"test"}
+    labels_dict = {0: "Hello!", 1: "How are you?", 2: "I am fine", 3: "Thank you!",4:"What is your name?",5:"Stop"}
     while True:
         data_aux = []
         x_ = []
