@@ -18,9 +18,9 @@ class LoginWindow(QWidget):
         self.password_input.setEchoMode(QLineEdit.Password)
         self.login_button = QPushButton("Login")
         self.signup_button = QPushButton("Sign Up")
-        self.edit_password_button = QPushButton("Edit Password")  # New button for editing password
+        self.edit_password_button = QPushButton("Edit Password")  
 
-        # Apply QSS to style the widgets
+        # QSS to style widgets
         self.setStyleSheet("""
             QLabel {
                 font-size: 16px;

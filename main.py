@@ -86,13 +86,12 @@ class SignLanguageApp(QMainWindow):
             "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
         )
         self.copy_button.clicked.connect(self.copy_text)
-        self.history_button = QPushButton("  History")
-        self.history_button.setIcon(QIcon("images/history.png"))
-        self.history_button.setStyleSheet(
-            "background-color: #19c37d; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
+        self.clear_chat_button = QPushButton("  Clear Chat")  # Change the button text
+        self.clear_chat_button.setIcon(QIcon("images/clear.png"))  # You can use an appropriate icon
+        self.clear_chat_button.setStyleSheet(
+            "background-color: #ff3333; color: white; padding: 10px; font-size: 16px; border-radius: 15px;"
         )
-        self.history_button.clicked.connect(self.show_chat_history)
-
+        self.clear_chat_button.clicked.connect(self.clear_chat)  # Connect to the clear_chat function
         self.logout_button = QPushButton("  Exit")
         self.logout_button.setIcon(QIcon("images/exit.png"))
         self.logout_button.setStyleSheet(
@@ -100,7 +99,7 @@ class SignLanguageApp(QMainWindow):
         )
         self.logout_button.clicked.connect(self.close)  # Exit the program
         self.nav_layout.addWidget(self.copy_button)
-        self.nav_layout.addWidget(self.history_button)
+        self.nav_layout.addWidget(self.clear_chat_button)  # Add the "Clear Chat" button
         self.nav_layout.addWidget(self.logout_button)
         self.left_layout.addLayout(self.nav_layout)
 
@@ -154,6 +153,9 @@ class SignLanguageApp(QMainWindow):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.text_output.toPlainText())
 
+    def clear_chat(self):  # Add the clear_chat function
+        self.text_output.clear()  # Clear the chat history
+
     def toggle_recognition(self):
         global cameraStart
         self.recognizing = not self.recognizing
@@ -186,7 +188,7 @@ class SignLanguageApp(QMainWindow):
 
 class ChatHistoryDialog(QDialog):
     def __init__(self, chat_history, parent=None):
-        super().__init__(parent)
+        super().__init(parent)
 
         self.setWindowTitle("Chat History")
         self.setGeometry(200, 200, 600, 400)
@@ -237,7 +239,7 @@ if __name__ == "__main__":
 
     hands = mp_hands.Hands(static_image_mode=True, min_detection_confidence=0.3)
     buffer = []
-    labels_dict = {0: "Hello!", 1: "How are you?", 2: "I am fine", 3: "Thank you!",4:"What is your name?",5:"Stop"}
+    labels_dict = {0: "Hello!", 1: "Stop", 2: "I am fine", 3: "Thank you!",4:"What is your name?",5:"How are you?"}
     while True:
         data_aux = []
         x_ = []
@@ -303,7 +305,7 @@ if __name__ == "__main__":
         if cameraStart:
             window.camera_label.setPixmap(QPixmap("image.png"))
             if predicted_character != "":
-                if len(buffer) < 10:
+                if len(buffer) < 5:
                     buffer.append(predicted_character)
                 else:
                     window.text_output.append(most_common_value(buffer))
