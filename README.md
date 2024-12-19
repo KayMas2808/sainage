@@ -1,6 +1,4 @@
-Sure, I've updated the instructions to reflect the changes:
-
-# sAInage: Sign Language to Text Interpreter¹[1]
+# sAInage: Sign Language to Text Interpreter
 
 sAInage is a desktop application that uses artificial intelligence to recognize and interpret sign language gestures in real-time²[2]³[3]. The application converts the recognized signs into text format, enabling seamless communication between sign language users and non-sign language users⁴[4].
 
